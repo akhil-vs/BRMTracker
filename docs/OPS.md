@@ -9,12 +9,15 @@
 3. Sign in as organiser (`/auth`), create club via SQL or RPC `create_club_with_owner`.
 4. Organise wizard: event → GPX/controls → entries → **live**.
 5. Note join code. Build release APK: `cd apps/rider && flutter build apk`.
-6. Share APK + join code with riders. Ask them to complete the battery checklist.
+6. Share **one APK** with riders and volunteers + join code.
+7. Riders: open app → **I am a rider** → join → battery checklist.
+8. Volunteers: open app → **I am a volunteer** → Desk / Live tabs.
 
 ## Event day
 
-- **Control desk:** volunteers open `/control-desk` on phones. Search bib → Confirm. Undo if wrong.
-- **Control room:** `/control-room` for staff — no public delay. Watch SOS and cutoff-risk.
+- **Field desk:** volunteers use the **Android app** (Volunteer → Desk). Search bib → Confirm. Undo if wrong.
+- **HQ control room:** admins use `/control-room` on a laptop — no public delay. Watch SOS and cutoff-risk.
+- **HQ desk fallback:** `/control-desk` only if a laptop is at the control.
 - **Public:** `/public` (delayed). Optional: run snapshot script every 60s and host `live.json` on Cloudflare R2/Pages so viewers do not hit Supabase.
 
 ```bash

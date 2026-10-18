@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models.dart';
+import 'screens/role_picker_screen.dart';
+import 'screens/volunteer/volunteer_shell.dart';
+import 'services/demo_event_store.dart';
 import 'services/join_service.dart';
 import 'services/session_store.dart';
 import 'services/tracking_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BrmRiderApp());
+  runApp(const BrmTrackerApp());
 }
 
-class BrmRiderApp extends StatelessWidget {
-  const BrmRiderApp({super.key});
+class BrmTrackerApp extends StatelessWidget {
+  const BrmTrackerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,21 +29,24 @@ class BrmRiderApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF3F0E8),
       ),
-      home: const GateScreen(),
+      home: const AppShell(),
     );
   }
 }
 
-class GateScreen extends StatefulWidget {
-  const GateScreen({super.key});
+/// Multi-role shell: Rider | Volunteer. Admins use the web.
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
 
   @override
-  State<GateScreen> createState() => _GateScreenState();
+  State<AppShell> createState() => _AppShellState();
 }
 
-class _GateScreenState extends State<GateScreen> {
+class _AppShellState extends State<AppShell> {
   final _sessions = SessionStore();
+  AppRole? _role;
   RideSession? _session;
   bool _loading = true;
   bool _batteryDone = false;
@@ -51,10 +58,40 @@ class _GateScreenState extends State<GateScreen> {
   }
 
   Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roleStr = prefs.getString('app_role');
     final s = await _sessions.load();
     setState(() {
+      if (roleStr == 'rider') _role = AppRole.rider;
+      if (roleStr == 'volunteer') _role = AppRole.volunteer;
       _session = s;
+      // Returning rider skips role picker when session exists
+      if (s != null) {
+        _role = AppRole.rider;
+        _batteryDone = prefs.getBool('battery_done') ?? false;
+      }
       _loading = false;
+    });
+  }
+
+  Future<void> _setRole(AppRole role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'app_role',
+      role == AppRole.rider ? 'rider' : 'volunteer',
+    );
+    setState(() => _role = role);
+  }
+
+  Future<void> _clearRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('app_role');
+    await prefs.remove('battery_done');
+    await _sessions.clear();
+    setState(() {
+      _role = null;
+      _session = null;
+      _batteryDone = false;
     });
   }
 
@@ -63,9 +100,17 @@ class _GateScreenState extends State<GateScreen> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    if (_role == null) {
+      return RolePickerScreen(onPicked: _setRole);
+    }
+    if (_role == AppRole.volunteer) {
+      return VolunteerShell(onLeave: _clearRole);
+    }
+    // Rider mode
     if (_session == null) {
       return JoinScreen(
         sessions: _sessions,
+        onBack: _clearRole,
         onJoined: (session) => setState(() {
           _session = session;
           _batteryDone = false;
@@ -74,28 +119,35 @@ class _GateScreenState extends State<GateScreen> {
     }
     if (!_batteryDone) {
       return BatteryChecklistScreen(
-        onContinue: () => setState(() => _batteryDone = true),
+        onContinue: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('battery_done', true);
+          setState(() => _batteryDone = true);
+        },
       );
     }
     return RideScreen(
       session: _session!,
       sessions: _sessions,
-      onLeave: () async {
-        await _sessions.clear();
-        setState(() {
-          _session = null;
-          _batteryDone = false;
-        });
-      },
+      onLeave: _clearRole,
     );
   }
 }
 
+// Back-compat alias for older tests
+typedef BrmRiderApp = BrmTrackerApp;
+
 class JoinScreen extends StatefulWidget {
-  const JoinScreen({super.key, required this.sessions, required this.onJoined});
+  const JoinScreen({
+    super.key,
+    required this.sessions,
+    required this.onJoined,
+    this.onBack,
+  });
 
   final SessionStore sessions;
   final ValueChanged<RideSession> onJoined;
+  final VoidCallback? onBack;
 
   @override
   State<JoinScreen> createState() => _JoinScreenState();
@@ -134,17 +186,19 @@ class _JoinScreenState extends State<JoinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: widget.onBack == null
+          ? null
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
+              title: const Text('Rider join'),
+            ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'BRM Tracker',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
             Text(
               'Join once. Tracking continues with the screen off.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -417,14 +471,28 @@ class _RideScreenState extends State<RideScreen> {
                       minimumSize: const Size.fromHeight(52),
                       foregroundColor: Colors.red.shade800,
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'SOS queued for organisers when online. Call 112 if in danger.',
+                    onPressed: () async {
+                      try {
+                        final store = DemoEventStore();
+                        final event = await store.load();
+                        final entryId = event.entries.isNotEmpty
+                            ? event.entries.first.id
+                            : 'e1';
+                        await store.raiseSos(
+                          entryId: entryId,
+                          message:
+                              'SOS from ${widget.session.nickname} — call 112 if in danger',
+                        );
+                      } catch (_) {}
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'SOS sent to volunteer Live tab. Call 112 if in danger.',
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                     child: const Text('SOS'),
                   ),

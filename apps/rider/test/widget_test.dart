@@ -5,12 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('join screen shows brand', (WidgetTester tester) async {
+  testWidgets('role picker shows rider and volunteer', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const BrmRiderApp());
-    await tester.pump(); // loading
-    await tester.pump(); // join screen
+    await tester.pumpWidget(const BrmTrackerApp());
+    await tester.pump();
+    await tester.pump();
     expect(find.text('BRM Tracker'), findsOneWidget);
-    expect(find.text('Join event'), findsOneWidget);
+    expect(find.text('I am a rider'), findsOneWidget);
+    expect(find.text('I am a volunteer'), findsOneWidget);
   });
 }

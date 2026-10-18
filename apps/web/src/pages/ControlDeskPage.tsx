@@ -37,8 +37,8 @@ export function ControlDeskPage() {
       <section>
         <h1>{t('controlDesk')}</h1>
         <p className="lead">
-          Thumb-first confirm for no-signal riders. Large buttons, bib search,
-          undo always nearby.
+          HQ laptop fallback. Field volunteers should use the <strong>Android app</strong>{' '}
+          Volunteer → Desk mode. Large buttons, bib search, undo nearby.
         </p>
       </section>
 

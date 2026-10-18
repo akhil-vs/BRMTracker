@@ -15,30 +15,54 @@ export function HomePage() {
   return (
     <div className="stack">
       <section>
-        <h1>BRM Tracker India</h1>
+        <h1>Admin console</h1>
         <p className="lead">
-          Free tools for Indian randonneuring clubs: ACP times, live ops, volunteer
-          desk, join-and-forget Android tracking, and a delayed public board.
+          Set up brevets, watch HQ control room, export results. Riders and field
+          volunteers use the <strong>Android app</strong> (one APK, two modes).
+          Families follow on the public page — no install.
         </p>
         <div className="actions">
           <Link className="button" to="/organise">
             {t('organise')}
           </Link>
-          <Link className="button secondary" to="/calculator">
-            {t('calculator')}
+          <Link className="button secondary" to="/control-room">
+            {t('controlRoom')}
           </Link>
           <Link className="button secondary" to="/public">
             {t('publicBoard')}
           </Link>
+          <Link className="button secondary" to="/auth">
+            {t('auth')}
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid two">
+        <div className="panel">
+          <h2>Android app</h2>
+          <p className="muted">
+            <strong>Rider:</strong> join code → battery checklist → track.
+            <br />
+            <strong>Volunteer:</strong> desk confirm/undo + live risk list.
+          </p>
+          <p className="muted">
+            Demo join code: <strong>{event?.joinCode ?? 'BRM200'}</strong>
+          </p>
+        </div>
+        <div className="panel">
+          <h2>This website</h2>
+          <p className="muted">
+            Clubs/admins: event wizard, GPX, ACP times, entries, HQ map, results
+            CSV. Public delayed board for followers.
+          </p>
         </div>
       </section>
 
       {event && (
         <section className="panel">
-          <h2>Demo event</h2>
+          <h2>Current demo event</h2>
           <p className="muted">
-            {event.clubName} · {event.name} · join code{' '}
-            <strong>{event.joinCode}</strong>
+            {event.clubName} · {event.name}
           </p>
           <div className="stat-row">
             <div className="stat">
@@ -54,29 +78,13 @@ export function HomePage() {
               Controls
             </div>
             <div className="stat">
-              <strong>{event.publicDelayMinutes}m</strong>
-              Public delay
+              <strong>{event.status}</strong>
+              Status
             </div>
           </div>
         </section>
       )}
 
-      <section className="grid two">
-        <div className="panel">
-          <h2>For clubs</h2>
-          <p className="muted">
-            Wizard setup under 15 minutes, GPX import, ACP controls, desk confirm
-            for no-signal riders, live risk board.
-          </p>
-        </div>
-        <div className="panel">
-          <h2>For riders</h2>
-          <p className="muted">
-            Join with <strong>{event?.joinCode ?? 'BRM200'}</strong>, consent once,
-            battery checklist, then ride. Glance for time in hand only.
-          </p>
-        </div>
-      </section>
       <p className="muted">{t('sosDisclaimer')}</p>
     </div>
   )

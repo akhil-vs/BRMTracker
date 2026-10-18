@@ -11,18 +11,20 @@ export function Layout() {
         <NavLink to="/" className="brand">
           {t('brand')}
         </NavLink>
-        <nav className="nav">
+        <nav className="nav" aria-label="Admin">
           <NavLink to="/" end>
             {t('home')}
           </NavLink>
-          <NavLink to="/calculator">{t('calculator')}</NavLink>
-          <NavLink to="/organise">{t('organise')}</NavLink>
-          <NavLink to="/control-room">{t('controlRoom')}</NavLink>
-          <NavLink to="/control-desk">{t('controlDesk')}</NavLink>
-          <NavLink to="/public">{t('publicBoard')}</NavLink>
-          <NavLink to="/results">{t('results')}</NavLink>
-          <NavLink to="/privacy">{t('privacy')}</NavLink>
           <NavLink to="/auth">{t('auth')}</NavLink>
+          <NavLink to="/organise">{t('organise')}</NavLink>
+          <NavLink to="/calculator">{t('calculator')}</NavLink>
+          <NavLink to="/control-room">{t('controlRoom')}</NavLink>
+          <NavLink to="/results">{t('results')}</NavLink>
+          <NavLink to="/public">{t('publicBoard')}</NavLink>
+          <NavLink to="/privacy">{t('privacy')}</NavLink>
+          <NavLink to="/control-desk" title="Laptop fallback — field volunteers use the app">
+            {t('controlDesk')}
+          </NavLink>
         </nav>
         <div className="actions">
           <select
@@ -39,6 +41,9 @@ export function Layout() {
           </span>
         </div>
       </header>
+      <p className="muted" style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
+        {t('fieldHint')}
+      </p>
       <Outlet />
     </div>
   )
