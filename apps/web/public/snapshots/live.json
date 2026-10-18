@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-10-18T13:59:24.336Z",
+  "event": {
+    "id": "demo",
+    "name": "BRM 200 — Demo",
+    "clubName": "Demo Randonneurs Bangalore",
+    "distanceKm": 200,
+    "status": "live",
+    "publicDelayMinutes": 15
+  },
+  "riders": [],
+  "note": "Replace by reading Supabase + buildPublicSnapshot in a scheduled function."
+}

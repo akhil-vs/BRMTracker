@@ -4,7 +4,7 @@ A free platform for Indian randonneuring clubs to run brevets, for riders to be 
 
 **What we are asking of clubs:** feedback on this plan, willingness to pilot on a friendly 200 km or 300 km event, and a short trial of the volunteer control desk on a basic phone.
 
-**Status:** This repository currently holds the product plan. Concept and browser prototype ideas exist; the next build steps (when approved) are a real data model and an Android rider-app skeleton. Privacy and consent wording must be reviewed by someone qualified before any real event.
+**Status:** Pilot-oriented build in repo: Supabase schema + RPCs, organiser wizard (GPX), live desk/room with OSM maps, delayed public/embed/snapshot path, results export, privacy draft, Flutter join-and-forget core (queue, geofence, time in hand, battery checklist). Connect a live Supabase project and run phone endurance tests before a club event. Privacy wording still needs qualified review.
 
 ---
 
@@ -134,11 +134,9 @@ Free-tier limits change, so check them before committing to a stack.
 
 ## 9. Current status and next steps
 
-The conceptual prototype covers the control calculator, join-and-forget rider flow (simulated), live board, public view with delay, and the control desk. That data is simulated and browser-only.
+See [OPS.md](OPS.md) for how to run a pilot. Demo data still works offline in the browser; point `VITE_SUPABASE_*` at a project after applying migrations for shared live data.
 
-**In this repo today:** this product plan (and a short README).
-
-**When build starts:** real data model and Android app skeleton, then foundation features for a club pilot.
+**Next for a friendly-club 200/300 km:** Supabase provisioning, release APK, multi-brand overnight tracking test, legal consent review.
 
 ---
 
