@@ -1,96 +1,229 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  getSessionUser,
-  signInDemo,
-  signInWithPassword,
-  signOut,
-  usingDemoStore,
-} from '../lib/api'
-import type { AuthUser } from '../lib/types'
+  DEMO_PASSWORD,
+  listDemoQuickAccounts,
+} from '../lib/auth'
+import { useAuth } from '../lib/authContext'
+import type { UserRole } from '../lib/types'
+
+type Mode = 'signin' | 'signup'
 
 export function AuthPage() {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [email, setEmail] = useState('organiser@club.example')
-  const [password, setPassword] = useState('demo-password')
-  const [name, setName] = useState('Event Admin')
-  const [error, setError] = useState<string | null>(null)
+  const { user, signIn, register, signOut, usingDemoStore } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from =
+    (location.state as { from?: string } | null)?.from ?? defaultHomeFor(user?.role)
 
-  useEffect(() => {
-    void getSessionUser().then(setUser)
-  }, [])
+  const [mode, setMode] = useState<Mode>('signin')
+  const [email, setEmail] = useState('admin@club.example')
+  const [password, setPassword] = useState(DEMO_PASSWORD)
+  const [name, setName] = useState('Event Admin')
+  const [role, setRole] = useState<UserRole>('admin')
+  const [clubName, setClubName] = useState('Pune Randonneurs')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const demos = useMemo(() => listDemoQuickAccounts(), [])
+
+  async function submit() {
+    setError(null)
+    setBusy(true)
+    try {
+      const next =
+        mode === 'signin'
+          ? await signIn(email, password)
+          : await register({
+              email,
+              password,
+              displayName: name,
+              role,
+              clubName,
+            })
+      const dest =
+        from && from !== '/auth' ? from : defaultHomeFor(next.role)
+      navigate(dest, { replace: true })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Authentication failed')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
-    <div className="stack">
-      <section>
-        <h1>Organiser sign-in</h1>
+    <div className="auth-page">
+      <section className="auth-hero" aria-labelledby="auth-brand">
+        <p className="eyebrow">Account</p>
+        <h1 id="auth-brand">BRM Tracker</h1>
         <p className="lead">
-          {usingDemoStore
-            ? 'Demo mode stores a local organiser session in this browser. Connect Supabase for real auth.'
-            : 'Sign in with your Supabase email/password.'}
+          One login for club admins on the web, and for riders and volunteers in
+          the Android app. Public follow pages stay open — no account needed.
         </p>
       </section>
 
-      <section className="panel stack">
+      <section className="auth-panel stack">
         {user ? (
           <>
+            <h2>Signed in</h2>
             <p>
-              Signed in as <strong>{user.displayName}</strong> ({user.email})
+              <strong>{user.displayName}</strong>
+              <span className="muted"> · {user.email}</span>
             </p>
-            <button
-              type="button"
-              className="secondary"
-              onClick={async () => {
-                await signOut()
-                setUser(null)
-              }}
-            >
-              Sign out
-            </button>
+            <p className="role-chip" data-role={user.role}>
+              {labelRole(user.role)}
+              {user.clubName ? ` · ${user.clubName}` : ''}
+            </p>
+            <div className="actions">
+              <Link className="button" to={defaultHomeFor(user.role)}>
+                Continue
+              </Link>
+              <button
+                type="button"
+                className="secondary"
+                onClick={async () => {
+                  await signOut()
+                }}
+              >
+                Sign out
+              </button>
+            </div>
           </>
         ) : (
           <>
-            <label>
-              Display name
-              <input value={name} onChange={(e) => setName(e.target.value)} />
-            </label>
+            <div className="mode-toggle" role="tablist" aria-label="Auth mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'signin'}
+                className={mode === 'signin' ? '' : 'secondary'}
+                onClick={() => setMode('signin')}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'signup'}
+                className={mode === 'signup' ? '' : 'secondary'}
+                onClick={() => setMode('signup')}
+              >
+                Create account
+              </button>
+            </div>
+
+            <p className="muted">
+              {usingDemoStore
+                ? 'Demo mode: accounts stay in this browser. Password for seeded users is demo-password.'
+                : 'Supabase email and password. Role comes from club membership when available.'}
+            </p>
+
+            {mode === 'signup' && (
+              <>
+                <label>
+                  Display name
+                  <input
+                    value={name}
+                    autoComplete="name"
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Role
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as UserRole)}
+                  >
+                    <option value="admin">Club admin (web HQ)</option>
+                    <option value="volunteer">Control volunteer (field)</option>
+                    <option value="rider">Rider</option>
+                  </select>
+                </label>
+                {(role === 'admin' || role === 'owner') && (
+                  <label>
+                    Club name
+                    <input
+                      value={clubName}
+                      onChange={(e) => setClubName(e.target.value)}
+                    />
+                  </label>
+                )}
+              </>
+            )}
+
             <label>
               Email
               <input
                 type="email"
                 value={email}
+                autoComplete="username"
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            {!usingDemoStore && (
-              <label>
-                Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </label>
-            )}
+            <label>
+              Password
+              <input
+                type="password"
+                value={password}
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+
             {error && <p className="danger">{error}</p>}
-            <button
-              type="button"
-              onClick={async () => {
-                setError(null)
-                try {
-                  const u = usingDemoStore
-                    ? await signInDemo(email, name)
-                    : await signInWithPassword(email, password)
-                  setUser(u)
-                } catch (e) {
-                  setError(e instanceof Error ? e.message : 'Sign-in failed')
-                }
-              }}
-            >
-              Sign in
+
+            <button type="button" disabled={busy} onClick={() => void submit()}>
+              {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </button>
+
+            {usingDemoStore && (
+              <div className="demo-accounts stack">
+                <h3>Quick demo accounts</h3>
+                <div className="actions">
+                  {demos.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className="secondary"
+                      onClick={() => {
+                        setMode('signin')
+                        setEmail(d.email)
+                        setPassword(DEMO_PASSWORD)
+                        setName(d.displayName)
+                        setRole(d.role)
+                      }}
+                    >
+                      {labelRole(d.role)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </section>
     </div>
   )
+}
+
+function labelRole(role: UserRole): string {
+  switch (role) {
+    case 'owner':
+      return 'Owner'
+    case 'admin':
+      return 'Admin'
+    case 'volunteer':
+      return 'Volunteer'
+    case 'rider':
+      return 'Rider'
+    default:
+      return 'Member'
+  }
+}
+
+function defaultHomeFor(role?: UserRole): string {
+  if (!role) return '/'
+  if (role === 'volunteer') return '/control-desk'
+  if (role === 'rider' || role === 'member') return '/public'
+  return '/organise'
 }

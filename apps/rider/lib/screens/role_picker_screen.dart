@@ -10,47 +10,63 @@ class RolePickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 24),
-              Text(
-                'BRM Tracker',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'One app for the event. Admins set up events on the web.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.black54,
-                    ),
-              ),
-              const Spacer(),
-              _RoleCard(
-                icon: Icons.pedal_bike,
-                title: 'I am a rider',
-                subtitle: 'Join, track in the background, glance for time in hand',
-                onTap: () => onPicked(AppRole.rider),
-              ),
-              const SizedBox(height: 16),
-              _RoleCard(
-                icon: Icons.fact_check,
-                title: 'I am a volunteer',
-                subtitle: 'Confirm riders at a control · see SOS and risk alerts',
-                onTap: () => onPicked(AppRole.volunteer),
-              ),
-              const Spacer(),
-              const Text(
-                'Supports safety awareness — does not replace 112 or club procedures.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.black45),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF16352D),
+              Color(0xFF0B6E4F),
+              Color(0xFF1A4A3C),
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 32),
+                Text(
+                  'BRM Tracker',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -1,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Sign in once. Riders track with the screen off. Volunteers run the desk.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white70,
+                        height: 1.4,
+                      ),
+                ),
+                const Spacer(),
+                _RoleCard(
+                  icon: Icons.pedal_bike,
+                  title: 'I am a rider',
+                  subtitle: 'Sign in → join code → ride',
+                  onTap: () => onPicked(AppRole.rider),
+                ),
+                const SizedBox(height: 14),
+                _RoleCard(
+                  icon: Icons.fact_check,
+                  title: 'I am a volunteer',
+                  subtitle: 'Sign in → confirm riders · SOS live',
+                  onTap: () => onPicked(AppRole.volunteer),
+                ),
+                const Spacer(),
+                const Text(
+                  'Admins set up events on the web. Supports safety awareness — does not replace 112.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.white54),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -75,37 +91,40 @@ class _RoleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      elevation: 1,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 28,
-                backgroundColor: const Color(0xFFD8EFE6),
-                child: Icon(icon, color: const Color(0xFF0B6E4F), size: 28),
+                radius: 26,
+                backgroundColor: const Color(0xFFD3EBE3),
+                child: Icon(icon, color: const Color(0xFF0B6E4F), size: 26),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0F1C24),
                           ),
                     ),
                     const SizedBox(height: 4),
-                    Text(subtitle, style: const TextStyle(color: Colors.black54)),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Color(0xFF5A6B75)),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const Icon(Icons.chevron_right, color: Color(0xFF5A6B75)),
             ],
           ),
         ),

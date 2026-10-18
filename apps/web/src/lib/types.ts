@@ -79,8 +79,13 @@ export interface EventRecord {
   alerts: Alert[]
 }
 
+export type UserRole = 'owner' | 'admin' | 'volunteer' | 'rider' | 'member'
+
 export interface AuthUser {
   id: string
   email: string
   displayName: string
+  role: UserRole
+  clubId?: string
+  clubName?: string
 }

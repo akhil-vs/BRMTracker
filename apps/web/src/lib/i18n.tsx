@@ -11,7 +11,7 @@ type Lang = 'en' | 'hi'
 
 const strings = {
   en: {
-    brand: 'BRM Tracker Admin',
+    brand: 'BRM Tracker',
     home: 'Home',
     calculator: 'Calculator',
     organise: 'Events',
@@ -21,16 +21,16 @@ const strings = {
     results: 'Results',
     auth: 'Sign in',
     privacy: 'Privacy',
-    demoStore: 'Local demo store',
-    supabaseOn: 'Supabase connected',
+    demoStore: 'Local demo',
+    supabaseOn: 'Supabase on',
     followSoon: 'Follow (email notify — coming soon)',
     sosDisclaimer:
       'This app supports safety awareness but does not replace emergency services (112) or the organiser’s procedures.',
     adminNav: 'Admin',
-    fieldHint: 'Riders & volunteers use the Android app',
+    fieldHint: 'Riders & volunteers: sign in on the Android app',
   },
   hi: {
-    brand: 'BRM ट्रैकर एडमिन',
+    brand: 'BRM ट्रैकर',
     home: 'होम',
     calculator: 'कैलकुलेटर',
     organise: 'इवेंट',
@@ -46,7 +46,7 @@ const strings = {
     sosDisclaimer:
       'यह ऐप सुरक्षा में मदद करता है, लेकिन आपातकालीन सेवाओं (112) या आयोजक प्रक्रियाओं का विकल्प नहीं है।',
     adminNav: 'एडमिन',
-    fieldHint: 'राइडर और स्वयंसेवक Android ऐप उपयोग करें',
+    fieldHint: 'राइडर और स्वयंसेवक: Android ऐप में साइन इन करें',
   },
 } as const
 

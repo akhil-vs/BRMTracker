@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { confirmCheckin, getEvent, undoCheckin } from '../lib/api'
+import { useAuth } from '../lib/authContext'
 import type { EventRecord } from '../lib/types'
 import { useI18n } from '../lib/i18n'
 
 export function ControlDeskPage() {
   const { t } = useI18n()
+  const { user } = useAuth()
   const [event, setEvent] = useState<EventRecord | null>(null)
   const [controlId, setControlId] = useState('')
-  const [volunteer, setVolunteer] = useState('Volunteer')
+  const [volunteerOverride, setVolunteerOverride] = useState<string | null>(null)
+  const volunteer = volunteerOverride ?? user?.displayName ?? 'Volunteer'
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -59,7 +62,10 @@ export function ControlDeskPage() {
           </label>
           <label>
             Volunteer name
-            <input value={volunteer} onChange={(e) => setVolunteer(e.target.value)} />
+            <input
+              value={volunteer}
+              onChange={(e) => setVolunteerOverride(e.target.value)}
+            />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
             Find by bib or nickname

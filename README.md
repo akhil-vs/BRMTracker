@@ -31,8 +31,11 @@ flutter run
 ```
 
 1. Pick **I am a rider** or **I am a volunteer**
-2. Rider: join **BRM200** → battery checklist → Start tracking
-3. Volunteer: Desk tab to confirm; Live tab for risk/SOS
+2. Sign in (demo: `rider@club.example` / `volunteer@club.example`, password `demo-password`)
+3. Rider: join **BRM200** → battery checklist → Start tracking
+4. Volunteer: Desk tab to confirm; Live tab for risk/SOS
+
+Admin web sign-in: `admin@club.example` / `demo-password`. See [docs/UI_ARCHITECTURE.md](docs/UI_ARCHITECTURE.md).
 
 ## Docs
 
