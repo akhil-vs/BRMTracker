@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getEvent } from '../lib/api'
+import { useAuth } from '../lib/authContext'
 import type { EventRecord } from '../lib/types'
 import { useI18n } from '../lib/i18n'
 
 export function HomePage() {
   const { t } = useI18n()
+  const { user, canAccessAdmin, canAccessHq } = useAuth()
   const [event, setEvent] = useState<EventRecord | null>(null)
 
   useEffect(() => {
@@ -13,54 +15,86 @@ export function HomePage() {
   }, [])
 
   return (
-    <div className="stack">
-      <section>
-        <h1>Admin console</h1>
-        <p className="lead">
-          Set up brevets, watch HQ control room, export results. Riders and field
-          volunteers use the <strong>Android app</strong> (one APK, two modes).
-          Families follow on the public page — no install.
+    <div className="home">
+      <section className="hero" aria-labelledby="hero-brand">
+        <div className="hero-atmosphere" aria-hidden="true" />
+        <div className="hero-content">
+          <p className="eyebrow">India · Audax · ACP</p>
+          <h1 id="hero-brand">BRM Tracker</h1>
+          <p className="hero-lead">
+            Free brevet ops for clubs — riders track with almost no effort, volunteers
+            confirm at controls, families follow on a delayed public board.
+          </p>
+          <div className="actions hero-actions">
+            {user ? (
+              <>
+                {canAccessAdmin && (
+                  <Link className="button" to="/organise">
+                    {t('organise')}
+                  </Link>
+                )}
+                {canAccessHq && (
+                  <Link className="button secondary" to="/control-room">
+                    {t('controlRoom')}
+                  </Link>
+                )}
+                <Link className="button secondary" to="/public">
+                  {t('publicBoard')}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link className="button" to="/auth">
+                  {t('auth')}
+                </Link>
+                <Link className="button secondary" to="/public">
+                  Follow live
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {user && (
+        <section className="signed-in-strip">
+          <p>
+            Signed in as <strong>{user.displayName}</strong>
+            <span className="muted"> · {user.role}</span>
+            {user.clubName ? (
+              <span className="muted"> · {user.clubName}</span>
+            ) : null}
+          </p>
+        </section>
+      )}
+
+      <section className="split-section" aria-labelledby="split-heading">
+        <h2 id="split-heading">Where each person works</h2>
+        <p className="lead section-lead">
+          One Android APK for the road. This website for club HQ and public follow.
         </p>
-        <div className="actions">
-          <Link className="button" to="/organise">
-            {t('organise')}
-          </Link>
-          <Link className="button secondary" to="/control-room">
-            {t('controlRoom')}
-          </Link>
-          <Link className="button secondary" to="/public">
-            {t('publicBoard')}
-          </Link>
-          <Link className="button secondary" to="/auth">
-            {t('auth')}
-          </Link>
+        <div className="split-grid">
+          <article>
+            <h3>Android app</h3>
+            <p className="muted">
+              Riders sign in, join with a code, then ride. Volunteers sign in for
+              desk confirm and live SOS. Demo code{' '}
+              <strong>{event?.joinCode ?? 'BRM200'}</strong>.
+            </p>
+          </article>
+          <article>
+            <h3>Admin web</h3>
+            <p className="muted">
+              Club admins sign in here to set up events, import GPX, run the HQ
+              room, and export results.
+            </p>
+          </article>
         </div>
       </section>
 
-      <section className="grid two">
-        <div className="panel">
-          <h2>Android app</h2>
-          <p className="muted">
-            <strong>Rider:</strong> join code → battery checklist → track.
-            <br />
-            <strong>Volunteer:</strong> desk confirm/undo + live risk list.
-          </p>
-          <p className="muted">
-            Demo join code: <strong>{event?.joinCode ?? 'BRM200'}</strong>
-          </p>
-        </div>
-        <div className="panel">
-          <h2>This website</h2>
-          <p className="muted">
-            Clubs/admins: event wizard, GPX, ACP times, entries, HQ map, results
-            CSV. Public delayed board for followers.
-          </p>
-        </div>
-      </section>
-
-      {event && (
-        <section className="panel">
-          <h2>Current demo event</h2>
+      {event && user && canAccessAdmin && (
+        <section className="event-section" aria-labelledby="event-heading">
+          <h2 id="event-heading">Current demo event</h2>
           <p className="muted">
             {event.clubName} · {event.name}
           </p>
@@ -85,7 +119,7 @@ export function HomePage() {
         </section>
       )}
 
-      <p className="muted">{t('sosDisclaimer')}</p>
+      <p className="muted footer-note">{t('sosDisclaimer')}</p>
     </div>
   )
 }

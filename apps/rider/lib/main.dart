@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models.dart';
+import 'screens/login_screen.dart';
 import 'screens/role_picker_screen.dart';
 import 'screens/volunteer/volunteer_shell.dart';
+import 'services/auth_service.dart';
 import 'services/demo_event_store.dart';
 import 'services/join_service.dart';
 import 'services/session_store.dart';
@@ -20,16 +22,22 @@ class BrmTrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const accent = Color(0xFF0B6E4F);
     return MaterialApp(
       title: 'BRM Tracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0B6E4F),
+          seedColor: accent,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF3F0E8),
+        scaffoldBackgroundColor: const Color(0xFFEEF2F4),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFEEF2F4),
+          foregroundColor: Color(0xFF0F1C24),
+          elevation: 0,
+        ),
       ),
       home: const AppShell(),
     );
@@ -37,6 +45,7 @@ class BrmTrackerApp extends StatelessWidget {
 }
 
 /// Multi-role shell: Rider | Volunteer. Admins use the web.
+/// Flow: role → sign-in → join/desk.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -46,7 +55,9 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   final _sessions = SessionStore();
+  final _auth = AuthService();
   AppRole? _role;
+  AppUser? _user;
   RideSession? _session;
   bool _loading = true;
   bool _batteryDone = false;
@@ -60,15 +71,20 @@ class _AppShellState extends State<AppShell> {
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
     final roleStr = prefs.getString('app_role');
+    final user = await _auth.currentUser();
     final s = await _sessions.load();
     setState(() {
       if (roleStr == 'rider') _role = AppRole.rider;
       if (roleStr == 'volunteer') _role = AppRole.volunteer;
+      _user = user;
       _session = s;
-      // Returning rider skips role picker when session exists
-      if (s != null) {
+      if (s != null && user != null) {
         _role = AppRole.rider;
         _batteryDone = prefs.getBool('battery_done') ?? false;
+      }
+      // Stale role without session user → force login
+      if (_role != null && _user == null) {
+        // keep role so LoginScreen shows for that mode
       }
       _loading = false;
     });
@@ -80,16 +96,37 @@ class _AppShellState extends State<AppShell> {
       'app_role',
       role == AppRole.rider ? 'rider' : 'volunteer',
     );
-    setState(() => _role = role);
+    setState(() {
+      _role = role;
+      _user = null;
+    });
+  }
+
+  Future<void> _onAuthenticated(AppUser user) async {
+    setState(() => _user = user);
   }
 
   Future<void> _clearRole() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('app_role');
     await prefs.remove('battery_done');
+    await _auth.signOut();
     await _sessions.clear();
     setState(() {
       _role = null;
+      _user = null;
+      _session = null;
+      _batteryDone = false;
+    });
+  }
+
+  Future<void> _signOutKeepRole() async {
+    await _auth.signOut();
+    await _sessions.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('battery_done');
+    setState(() {
+      _user = null;
       _session = null;
       _batteryDone = false;
     });
@@ -103,14 +140,26 @@ class _AppShellState extends State<AppShell> {
     if (_role == null) {
       return RolePickerScreen(onPicked: _setRole);
     }
+    if (_user == null) {
+      return LoginScreen(
+        role: _role!,
+        auth: _auth,
+        onAuthenticated: _onAuthenticated,
+        onBack: _clearRole,
+      );
+    }
     if (_role == AppRole.volunteer) {
-      return VolunteerShell(onLeave: _clearRole);
+      return VolunteerShell(
+        volunteerName: _user!.displayName,
+        onLeave: _clearRole,
+      );
     }
     // Rider mode
     if (_session == null) {
       return JoinScreen(
         sessions: _sessions,
-        onBack: _clearRole,
+        defaultNickname: _user!.displayName,
+        onBack: _signOutKeepRole,
         onJoined: (session) => setState(() {
           _session = session;
           _batteryDone = false;
@@ -143,11 +192,13 @@ class JoinScreen extends StatefulWidget {
     required this.sessions,
     required this.onJoined,
     this.onBack,
+    this.defaultNickname,
   });
 
   final SessionStore sessions;
   final ValueChanged<RideSession> onJoined;
   final VoidCallback? onBack;
+  final String? defaultNickname;
 
   @override
   State<JoinScreen> createState() => _JoinScreenState();
@@ -155,10 +206,16 @@ class JoinScreen extends StatefulWidget {
 
 class _JoinScreenState extends State<JoinScreen> {
   final _code = TextEditingController(text: 'BRM200');
-  final _nick = TextEditingController();
+  late final TextEditingController _nick;
   bool _consent = false;
   String _visibility = 'public';
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _nick = TextEditingController(text: widget.defaultNickname ?? '');
+  }
 
   @override
   void dispose() {
@@ -392,7 +449,7 @@ class _RideScreenState extends State<RideScreen> {
     final next = _next;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F0E8),
+      backgroundColor: const Color(0xFFEEF2F4),
       appBar: AppBar(
         title: Text(widget.session.eventName),
         actions: [

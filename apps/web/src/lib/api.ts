@@ -3,10 +3,22 @@
  */
 import { store } from './store'
 import { supabase, usingDemoStore } from './supabase'
-import type { AuthUser, Entry, EventRecord, Visibility } from './types'
+import type { Entry, EventRecord, Visibility } from './types'
 import { buildPublicSnapshot } from './snapshot'
 
 export { usingDemoStore }
+export {
+  getSessionUser,
+  signInDemo,
+  signInWithPassword,
+  signOut,
+  signUp,
+  DEMO_PASSWORD,
+  listDemoQuickAccounts,
+  canAccessAdmin,
+  canAccessDesk,
+  canAccessHq,
+} from './auth'
 
 export async function getEvent(): Promise<EventRecord> {
   if (!supabase) return store.getEvent()
@@ -181,50 +193,4 @@ export function publicSnapshot(event?: EventRecord) {
 
 export function resultsCsv(event?: EventRecord) {
   return store.resultsCsv(event)
-}
-
-export async function getSessionUser(): Promise<AuthUser | null> {
-  if (!supabase) {
-    const raw = localStorage.getItem('brmtracker.demo.user')
-    return raw ? (JSON.parse(raw) as AuthUser) : null
-  }
-  const { data } = await supabase.auth.getUser()
-  if (!data.user) return null
-  return {
-    id: data.user.id,
-    email: data.user.email ?? '',
-    displayName:
-      (data.user.user_metadata?.display_name as string) ||
-      data.user.email?.split('@')[0] ||
-      'Organiser',
-  }
-}
-
-export async function signInDemo(email: string, displayName: string) {
-  const user: AuthUser = {
-    id: 'demo-user',
-    email,
-    displayName,
-  }
-  localStorage.setItem('brmtracker.demo.user', JSON.stringify(user))
-  return user
-}
-
-export async function signOut() {
-  localStorage.removeItem('brmtracker.demo.user')
-  if (supabase) await supabase.auth.signOut()
-}
-
-export async function signInWithPassword(email: string, password: string) {
-  if (!supabase) return signInDemo(email, email.split('@')[0] || 'Organiser')
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  if (error) throw error
-  return {
-    id: data.user!.id,
-    email: data.user!.email!,
-    displayName: data.user!.email!.split('@')[0],
-  } satisfies AuthUser
 }

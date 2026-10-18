@@ -5,9 +5,14 @@ import 'volunteer_desk_screen.dart';
 import 'volunteer_live_screen.dart';
 
 class VolunteerShell extends StatefulWidget {
-  const VolunteerShell({super.key, required this.onLeave});
+  const VolunteerShell({
+    super.key,
+    required this.onLeave,
+    this.volunteerName = 'Volunteer',
+  });
 
   final VoidCallback onLeave;
+  final String volunteerName;
 
   @override
   State<VolunteerShell> createState() => _VolunteerShellState();
@@ -16,12 +21,13 @@ class VolunteerShell extends StatefulWidget {
 class _VolunteerShellState extends State<VolunteerShell> {
   final _store = DemoEventStore();
   DemoEvent? _event;
-  String _volunteerName = 'Volunteer';
+  late String _volunteerName;
   int _tab = 0;
 
   @override
   void initState() {
     super.initState();
+    _volunteerName = widget.volunteerName;
     _reload();
   }
 
